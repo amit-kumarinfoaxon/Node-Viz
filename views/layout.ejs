@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<!-- saved from url=(0064)https://antonszilasi.github.io/spiderAnton/speed/speed-page.html -->
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="speed demo - create sample gbXML files quickly and easily">
+    <meta name="keywords" content="JavaScript,GitHub,FOSS,3D,STEM">
+    <meta name="date" content="2017-11-09">
+    <title>SPEED visualizations</title>
+    <style>
+     canvas { border: 1px solid black; }
+      /* Copyright 2017 Ladybug Tools authors. MIT License */
+      /*
+      body { font: 12pt monospace; margin: 0 auto;  }
+      a { color: crimson; text-decoration: none; }
+      a:hover, a:focus { background-color: yellow; color: #aaa; text-decoration: underline }
+      button, input[type=button] { background-color: #ddd; border: none; color: #322; cursor: pointer; padding: 3px 5px; }
+      button:hover { background: #ccc; color: #fff }
+     
+      input, input[ type = number ] { width: 50px; }
+      input[type=range] { -webkit-appearance: none; -moz-appearance: none; background-color: #ddd; width: 100%; }
+      input[type=range]::-moz-range-thumb { background-color: #888; border-radius: 0; width: 10px; }
+      input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; background-color: #888; height: 20px; width: 10px; }
+      table { border-spacing: 10px; }
+      input[ type = number ] { width: 50px; }
+      td { text-align: right; }
+      .checkbox { text-align: right; }
+      .column { display: inline-block; line-height: 30px; width: 150px;}
+      .floatright { float: right; }
+      #canvasPerspective { position: absolute; right: 100px; top: 50%; }
+      #canvasOrtho { position:absolute; right: 100px; top: 5%;}
+      #detSpeedMenu { border: 1px solid crimson; background-color: white; margin: 20px; padding: 8px; position: absolute; z-index: 10; }
+      #divHeader { left: 0; margin: 0 auto; position: absolute; max-width: 800px; right: 0; top: 0; }
+      #divDimensions, #divDimensions div { margin: 20px; width: 250px; }
+      #divLeftColumn, #divRightColumn { border: 0px solid red; display: inline-block; margin: 0 0px; vertical-align: top; width: 300px; }
+      #divRightColumn { text-align: right; }
+      #divRightColumn select { width: 50px; }
+      */
+      /* https://www.w3schools.com/colors/colors_names.asp // use colors and borders to help identify the scope of particular elements */
+      
+    </style>
+  </head>
+  <body>
+
+<script src = "js/init-threejs.js" ></script>
+<script src = "js/adjacent-buildings.js" ></script>
+<script src = "js/geometry.js" ></script>
+<script src = "js/envelope.js" ></script>
+<script src = "js/space-layout.js" ></script>
+<script src="js/librarys/three.min.js"></script>
+<script src="js/librarys/OrbitControls.js"></script>
+<script src="js/helperFunctions.js"></script>
+<script src="js/buildingCalcs.js"></script>
+<script src="js/buildingShapes.js"></script>
+<script src="js/drawVisualizations.js"></script>
+<script src="js/integration.js"></script>
+<script src="js/htmlcode.js"></script>
+    <div id="divContainer">
+      <div id="divContents">
+        <div id="divHeader">
+          <div id="divAdjacentBuildings" style="display: none;"></div>
+          <div id="divGeometry" style="display: none;">
+            <h2>
+              Shape Geometry
+            </h2>
+            <table>
+              <tbody>
+                <tr>
+                  <td>Building Area</td>
+                  <td># of Floors</td>
+                  <td>Floor Area</td>
+                  <td>Floor Height</td>
+                  <td># of Footprint Shapes (atm does nothing)</td>
+                </tr>
+                <tr>
+                  <td><input type="number" id="inpArea" step="50" onchange="changeBuildingArea();"></td>
+                  <td><input type="number" id="inpFloors" onchange="changeNumFloors();" min="1" max="20"></td>
+                  <td><output type="number" id="outFloorArea">10000</output></td>
+                  <td><input type="number" id="inpHeight" step="1" onchange="changeLengthSlider();" min="8" max="20"></td>
+                </tr>
+              </tbody>
+            </table>
+            <table>
+              <tbody>
+                <tr>
+                  <td>Footprint Shape</td>
+                  <td>Massing Generator (atm does nothing)</td>
+                  <td>Perimeter Depth </td>
+                  <td>Orientation</td>
+                </tr>
+                <tr>
+                  <td>
+                    <select id="selShape" size="4" onchange="changeBuildingShape();">
+                      <option>Box-Shape</option>
+                      <option>L-Shape</option>
+                      <option>T-Shape</option>
+                      <option>H-Shape</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select id="selMassing">
+                      <option>Generator 1</option>
+                      <option>Generator 2</option>
+                      <option>Generator 3</option>
+                    </select>
+                  </td>
+                  <td><input type="number" step="1" id="inpPerimeterDepth" oninput="changeLengthSlider();" min="10" max="20"></td>
+                  <td><input type="number" step="10" id="inpOrientation" oninput="changeLengthSlider();" min="0" max="350"></td>
+                </tr>
+              </tbody>
+            </table>
+            <div id="divDimensions" style="max-width:300px;">
+              <p><b>Footprint dimensions</b></p>
+              <div>
+                Length <output id="outLength" class="floatright">100</output>
+                <input type="range" id="inpLength" oninput="changeLengthSlider();" max="316.22776601683796" min="31.622776601683793">
+              </div>
+              <div>
+                Width <output id="outWidth" class="floatright">100</output>
+                <input type="range" id="inpWidth" oninput="changeWidthSlider();" max="316.22776601683796" min="31.622776601683793">
+              </div>
+              <div id="divValidation"><b>thickness:NA</b><br></div>
+            </div>
+            <div id="Opacity" style="max-width:300px;">
+              <p><b>Opacity</b></p>
+              <div>
+                <output id="opacityOut" class="floatright">0.5</output>
+                <input type="range" id="inpOpacity" step="0.1" oninput="changeLengthSlider();">
+              </div>
+            </div>
+          </div>
+          <div id="divEnvelope" style="display: none;">
+            <h2> Envelope by Building </h2>
+            <p><button onclick="changeWWR(WWRByFacade);">Toogle to WWRByBuilding</button></p>
+            <table>
+              <tbody>
+                <tr>
+                  <td>building wwr %</td>
+                  <td>number of Windows</td>
+                  <td>Overhang Depth</td>
+                  <td>Fin Depth</td>
+                </tr>
+                <tr>
+                  <td><input type="number" id="inpWwr" step="5" onchange="updateOpenings();" min="1" max="100"></td>
+                  <td><input type="number" id="noWindows" onchange="updateOpenings();" min="1" max="10"></td>
+                  <td><input type="number" id="inpOverhangDepth" onchange="updateOpenings();" min="0" max="10" step="0.5"></td>
+                  <td><input type="number" id="inpFinDepth" onchange="updateOpenings();" min="0" max="10" step="0.5"></td>
+                </tr>
+              </tbody>
+            </table>
+            <div>
+              Window Ratio <output id="windowRatioOut" class="floatright">0.5</output>
+              <input type="range" step="0.1" min="0" max="1" id="inpwindowRatio" style="max-width:300px" oninput="updateOpenings();">
+            </div>
+            <table>
+              <tbody>
+                <tr>
+                  <td>window Construction Type</td>
+                </tr>
+                <tr>
+                  <td>
+                    <select id="selWindowType" onchange="updateConstructions();">
+                      <option>ASHRAE 90.1 climate Zone 8</option>
+                      <option>ASHRAE 189.1 climate zone 7</option>
+                      <option>ASHRAE 189.1 climate zone 6</option>
+                    </select>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="divSpaceLayout" style="display: none;"></div>
+
+        </div>
+        <div id="threejsOrtho" style="display: block;">
+          <canvas id="canvasOrtho" height="500" width="490" ></canvas>
+        </div>
+        <div id="threejsPerspective" style="display: block;">
+          <canvas id="canvasPerspective" height="500" width="490" ></canvas>
+        </div>
+      </div>
+      <div id="asd"> </div>
+
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script>
+
+      var adjacentBuildingsGeometry = {};
+      var qLine = {};
+      var theBuilding = {};
+      var spaceLayout = {};
+
+       window.onmessage = function(msg) {
+         if(msg.data) {
+
+            theBuilding = JSON.parse(JSON.stringify(msg.data.sendData));
+
+            updateDimensions(theBuilding)
+          
+       }
+      };
+        
+      init(); 
+      animateThreejs(); 
+      function init() {
+
+        adjacentBuildingsGeometry.group = new THREE.Group();
+        adjacentBuildingsGeometry.group.name = "adjacentBuildings"
+        qLine.group = new THREE.Group();
+        qLine.group.name = "theBuilding"
+        initThreejs();
+        makeGridAxis()
+
+        drawNSEW();
+
+      }
+    </script>
+  </body>
+</html>

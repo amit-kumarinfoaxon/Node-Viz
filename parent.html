@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bootstrap 3, from LayoutIt!</title>
+    <meta name="description" content="Source code generated using layoutit.com">
+    <meta name="author" content="LayoutIt!">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+
+        <div class="col-md-12">
+          <h2>
+            Heading
+          </h2>
+         <div id="divGeometry" >
+
+          <h2>
+            Shape Geometry
+          </h2>
+          <table>
+            <tbody><tr>
+              <td>Building Area</td><td># of Floors</td><td>Floor Area</td><td>Floor Height</td><td># of Footprint Shapes (atm does nothing)</td>
+            </tr>
+
+            <tr>
+              <td><input type="number" id="inpArea" step="50" onchange="changeBuildingArea(event.target.value)"></td>
+              <td><input type="number" id="inpFloors" value="1" onchange="changeNumFloors(event.target.value)" min="1" max="20"></td>
+              <td><output type="number" id="outFloorArea">10000</output></td>
+              <td><input type="number" id="inpHeight" step="1" onchange="changeLengthSlider(event.target.value);" min="8" max="20"></td>
+            </tr>
+
+          </tbody></table>
+
+          <table>
+            <tbody><tr>
+              <td>Footprint Shape</td><td>Massing Generator (atm does nothing)</td><td>Perimeter Depth </td><td>Orientation</td>
+            </tr>
+
+            <tr>
+              <td><select id="selShape" size="4" onchange="changeBuildingShape(event.target.value);">
+                <option>Box-Shape</option>
+                <option>L-Shape</option>
+                <option>T-Shape</option>
+                <option>H-Shape</option>
+              </select></td>
+              <td><select id="selMassing"><option>Generator 1</option><option>Generator 2</option><option>Generator 3</option></select></td>
+              <td><input type="number" step="1" id="inpPerimeterDepth" oninput="changeLength(event.target.value);" min="10" max="20"></td>
+              <td><input type="number" step="10" id="inpOrientation" oninput="changeLength(event.target.value);" min="0" max="350"></td>
+            </tr>
+
+          </tbody></table>
+
+          <div id="divDimensions" style="max-width:300px;">
+
+            <p><b>Footprint dimensions</b></p>
+
+            <div>
+              Length <output id="outLength" class="floatright">100</output>
+              <input type="range" id="inpLength" oninput="changeLength();" max="316.22776601683796" min="31.622776601683793">
+            </div>
+
+            <div>
+              Width <output id="outWidth" class="floatright">100</output>
+              <input type="range" id="inpWidth" oninput="changeWidth(event.target.value);" max="316.22776601683796" min="31.622776601683793">
+            </div>
+
+            <div id="divValidation"><b>thickness:NA</b><br></div>
+
+          </div>
+          <div id="Opacity" style="max-width:300px;">
+
+            <p><b>Opacity</b></p>
+
+            <div>
+              <output id="opacityOut" class="floatright">0.5</output>
+              <input type="range" id="inpOpacity" step="0.1" oninput="changeLength();">
+            </div>
+
+          </div>
+        </div>
+          <p>
+            <a class="btn" href="javascript:void(0);" id="qwe">Click me »</a>
+          </p>
+        </div>
+
+      </div>
+    </div>
+    <iframe id="ifr" scrolling="yes" src="http://localhost:8080/" width="100%" height="550"></iframe>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="helperFunctions.js"></script>
+    <script src="buildingCalcs.js"></script>
+
+    <script type="text/javascript">
+      var changeFloorData,changeBuildingAreaData,changeShapeData,changeLength,changeWidth
+      // From https://energylab.atlassian.net/wiki/spaces/SPEED/pages/153845761/SPEED+geometryvisualization+integration+documentation documentation
+      // NOTE FOR change functions below
+      // NOTE wwrByBuilding:false means that the all property propertys by building level
+      // so it uses
+     //             wwr:0.5,
+     //             windowRatio:0.5,
+     //             overHangDepth:3,
+     //             finDepth:3,
+     //             noWindows:4,
+     // NOTE if wwrByBuilding:true means that the all property propertys by facade level so uses
+     // wwrS:0.5,
+     // windowRatioS:0.5,
+     // overHangDepthS:3,
+     // finDepthS:3,
+     // noWindowsS:1,
+     //
+     // wwrN:0.5,
+     // windowRatioN:0.5,
+     // overHangDepthN:3,
+     // finDepthN:3,
+     // noWindowsN:4,
+     //
+     // wwrE:0.5,
+     // windowRatioE:0.5,
+     // overHangDepthE:3,
+     // finDepthE:3,
+     // noWindowsE:4,
+     //
+     // wwrW:0.5,
+     // windowRatioW:0.5,
+     // overHangDepthW:3,
+     // finDepthW:3,
+     // noWindowsE:4,
+
+     /* just change */
+     // Global variables to store previous values and initalize geometry
+
+    //  var numStoreys = 1
+    //  var buildingArea = 10000
+    /// Need to initalize a building with some defaults and start with change Shape
+     theBuilding =
+     {
+       shape:0,
+       numStoreys:1,
+       area: 10000,
+       length:100,
+       width:100,
+       storeys:1,
+       storeyHeight:4,
+       orientation:0,
+       perimeterDepth:4,
+       opacity:1,
+       wwr:0.5,
+       windowRatio:0.5,
+       overHangDepth:3,
+       finDepth:3,
+       noWindows:4,
+       wwrS:0.5,
+       windowRatioS:0.5,
+       overHangDepthS:3,
+       finDepthS:3,
+       noWindowsS:1,
+       wwrN:0.5,
+       windowRatioN:0.5,
+       overHangDepthN:3,
+       finDepthN:3,
+       noWindowsN:4,
+       wwrE:0.5,
+       windowRatioE:0.5,
+       overHangDepthE:3,
+       finDepthE:3,
+       noWindowsE:4,
+       wwrW:0.5,
+       windowRatioW:0.5,
+       overHangDepthW:3,
+       finDepthW:3,
+       noWindowsW:4,
+       toogleSpaceLayout:false,
+       wwrByBuilding:true,
+     }
+
+     //changeBuildingShape()
+     // 3 is the box shape
+    /* just change */
+
+      function changeNumFloors(event)
+      {
+        // Update the numStoreys
+        theBuilding.newNumStoreys = parseFloat(event)
+
+        new Promise(function(resolve,reject)
+        {
+          implementUserChange(resolve,reject,userChange.numFloors,theBuilding)
+        })
+        .then(function(newBuilding)
+        {
+          // Update theBuilding object after changes
+          theBuilding = newBuilding
+
+          document.getElementById('ifr').contentWindow.postMessage(theBuilding, '*');
+        })
+      }
+      function changeBuildingArea(event){
+
+            implementUserChange(userChange.buildingArea,theBuilding)
+
+            document.getElementById('ifr').contentWindow.postMessage({
+              newArea:parseFloat(inpArea.value),
+              area:buildingArea,
+               toogleSpaceLayout:false,
+               wwrByBuilding:false,
+               shape:buildingShapes.Boxshape,
+               length:100,
+               width:100,
+               storeys:2,
+               storeyHeight:4,
+               orientation:0,
+               perimeterDepth:5,
+               opacity:0.7,
+               wwr:0.5,
+               windowRatio:0.5,
+               overHangDepth:3,
+               finDepth:3,
+               noWindows:4,
+               wwrS:0.5,
+               windowRatioS:0.5,
+               overHangDepthS:3,
+               finDepthS:3,
+               noWindowsS:1,
+               wwrN:0.5,
+               windowRatioN:0.5,
+               overHangDepthN:3,
+               finDepthN:3,
+               noWindowsN:4,
+               wwrE:0.5,
+               windowRatioE:0.5,
+               overHangDepthE:3,
+               finDepthE:3,
+               noWindowsE:4,
+               wwrW:0.5,
+               windowRatioW:0.5,
+               overHangDepthW:3,
+               finDepthW:3,
+               noWindowsW:4,
+            }, '*');
+
+        buildingArea = parseFloat(inpArea.value)
+
+      }
+
+      function changeLength(event)
+      {
+
+        implementUserChange(userChange.lengthChange,theBuilding)
+
+        document.getElementById('ifr').contentWindow.postMessage({
+           toogleSpaceLayout:false,
+           wwrByBuilding:true,
+           shape:buildingShapes.Boxshape,
+           area:10000,
+           length:100,
+           storeys:2,
+           storeyHeight:4,
+           orientation:0,
+           perimeterDepth:5,
+           opacity:0.7,
+           wwr:0.5,
+           windowRatio:0.5,
+           overHangDepth:3,
+           finDepth:3,
+           noWindows:4,
+           wwrS:0.5,
+           windowRatioS:0.5,
+           overHangDepthS:3,
+           finDepthS:3,
+           noWindowsS:1,
+           wwrN:0.5,
+           windowRatioN:0.5,
+           overHangDepthN:3,
+           finDepthN:3,
+           noWindowsN:4,
+           wwrE:0.5,
+           windowRatioE:0.5,
+           overHangDepthE:3,
+           finDepthE:3,
+           noWindowsE:4,
+           wwrW:0.5,
+           windowRatioW:0.5,
+           overHangDepthW:3,
+           finDepthW:3,
+           noWindowsW:4,
+        }, '*');
+      }
+      function changeWidth(event)
+      {
+        // Assign new width to building
+        theBuilding.width = parseFloat(event)
+
+        new Promise(function(resolve,reject)
+        {
+          implementUserChange(resolve,reject,userChange.widthChange,theBuilding)
+        })
+        .then(function(theBuilding)
+        {
+          document.getElementById('ifr').contentWindow.postMessage(theBuilding, '*');
+        })
+      }
+
+      function changeOpenings(event)
+      {
+
+        implementUserChange(userChange.openings,theBuilding)
+
+
+         console.log(" m i call")
+        document.getElementById('ifr').contentWindow.postMessage({
+           toogleSpaceLayout:false,
+           wwrByBuilding:true,
+           shape:buildingShapes.Boxshape,
+           area:10000,
+           length:100,
+           numStoreys:2,
+           storeyHeight:4,
+           orientation:0,
+           perimeterDepth:5,
+           opacity:0.7,
+           wwr:0.5,
+           windowRatio:0.5,
+           overHangDepth:3,
+           finDepth:3,
+           noWindows:4,
+           wwrS:0.5,
+           windowRatioS:0.5,
+           overHangDepthS:3,
+           finDepthS:3,
+           noWindowsS:1,
+           wwrN:0.5,
+           windowRatioN:0.5,
+           overHangDepthN:3,
+           finDepthN:3,
+           noWindowsN:4,
+           wwrE:0.5,
+           windowRatioE:0.5,
+           overHangDepthE:3,
+           finDepthE:3,
+           noWindowsE:4,
+           wwrW:0.5,
+           windowRatioW:0.5,
+           overHangDepthW:3,
+           finDepthW:3,
+           noWindowsW:4,
+        }, '*');
+      }
+
+      function changeBuildingShape(event){
+
+        if (event === undefined)
+        {
+          theBuilding.shape = buildingShapes.Boxshape
+        }
+        else {
+          theBuilding.shape = stringOfBuildingShapeToBuildingShapeEnum(event)
+        }
+
+        new Promise(function(resolve,reject)
+        {
+          implementUserChange(resolve,reject,userChange.buildingShape,theBuilding)
+        })
+        .then(function(newBuilding)
+        {
+          // Update theBuilding object after changes
+          theBuilding = newBuilding
+
+          document.getElementById('ifr').contentWindow.postMessage(theBuilding, '*');
+        })
+      }
+
+    </script>
+  </body>
+</html>
